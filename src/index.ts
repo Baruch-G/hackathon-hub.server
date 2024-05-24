@@ -1,18 +1,42 @@
-import { Request, Response } from "express";
-import hackathonRoutes from "./router/hackathon_routes";
-import dotenv from "dotenv";
-import express from 'express';
+import app from "./app";
+import https from 'https';
+import http from 'http';
+import fs from 'fs';
+import swaggerUI from "swagger-ui-express";
+import swaggerJsDoc from "swagger-jsdoc";
 
-dotenv.config();
-const app = express();
-const port = process.env.PORT;
+app().then((app: any) => {
+  const swaggerOptions = {
+    definition: {
+      openapi: "3.0.0",
+      info: {
+        title: "Web Advanced Application Development 2023 REST API",
+        version: "1.0.1",
+        description: "REST server including authentication using JWT and refresh token",
+      },
+      servers: [{ url: "http://localhost:3000" }],
+    },
+    apis: ["./src/routes/*.ts"],
+  };
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello world");
-});
+  const swaggerSpecs = swaggerJsDoc(swaggerOptions);
+  app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerSpecs));
 
-app.use("/hackathon", hackathonRoutes)
-
-app.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
+  const port = process.env.PORT || 3000;
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Development mode');
+    http.createServer(app).listen(port, () => {
+      console.log(`Server running on http://localhost:${port}`);
+    });
+  } else {
+    console.log('Production mode');
+    const httpsOptions = {
+      key: fs.readFileSync('../client-key.pem'),
+      cert: fs.readFileSync('../client-cert.pem')
+    };
+    const httpsPort = process.env.HTTPS_PORT || 3443;
+    https.createServer(httpsOptions, app).listen(httpsPort, () => {
+      console.log(`Server running on https://localhost:${httpsPort}`);
+    });
+  }
 });
