@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-const express = require("express");
-const dotenv = require("dotenv");
+import hackathonRoutes from "./router/hackathon_routes";
+import dotenv from "dotenv";
+import express from 'express';
 
 dotenv.config();
-
 const app = express();
 const port = process.env.PORT;
 
@@ -11,9 +11,7 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Hello world");
 });
 
-app.get("/hackathon", (req: Request, res: Response) => {
-  res.send("Express + TypeScript Server");
-});
+app.use("/hackathon", hackathonRoutes)
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
