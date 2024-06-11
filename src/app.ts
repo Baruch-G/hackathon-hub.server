@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import hackathonRoutes from "./router/hackathon_routes";
+import hackathonRoutes from "./routes/hackathon_routes";
+import authRoutes from "./routes/auth_route";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import express, { Express } from "express";
@@ -36,6 +37,8 @@ const app = (): Promise<Express> => {
         });
         app.use("/hackathon", hackathonRoutes);
         app.use("/public", express.static("public"));
+        app.use("/auth", authRoutes);
+
 
         resolve(app);
       })
