@@ -1,30 +1,31 @@
 import { Request, Response } from "express";
 import { Model } from "mongoose";
 
-export class BaseController<T>{
-    model: Model<T>
+export class BaseController<T> {
+    model: Model<T>;
+
     constructor(model: Model<T>) {
         this.model = model;
     }
 
     async get(req: Request, res: Response) {
         try {
-            if (req.query.name) {
-                const students = await this.model.find({ name: req.query.name });
-                res.send(students);
-            } else {
-                const students = await this.model.find();
-                res.send(students);
-            }
-        } catch (err : any) {
+            const query = req.query.name ? { name: req.query.name } : {};
+            const documents = await this.model.find(query)
+                .populate('creator', 'firstName lastName email imgUrl')
+                .populate('comments.user', 'firstName lastName email imgUrl');
+            res.send(documents);
+        } catch (err: any) {
             res.status(500).json({ message: err.message });
         }
     }
-    
+
     async getById(req: Request, res: Response) {
         try {
-            const student = await this.model.findById(req.params.id);
-            res.send(student);
+            const document = await this.model.findById(req.params.id)
+                .populate('creator', 'firstName lastName email imgUrl')
+                .populate('comments.user', 'firstName lastName email imgUrl');
+            res.send(document);
         } catch (err: any) {
             res.status(500).json({ message: err.message });
         }
@@ -40,17 +41,29 @@ export class BaseController<T>{
         }
     }
 
-    putById(req: Request, res: Response) {
-        res.send("put student by id: " + req.params.id);
+    async putById(req: Request, res: Response) {
+        try {
+            const updatedDocument = await this.model.findByIdAndUpdate(req.params.id, req.body, { new: true })
+                .populate('creator', 'firstName lastName email imgUrl')
+                .populate('comments.user', 'firstName lastName email imgUrl');
+            res.send(updatedDocument);
+        } catch (err: any) {
+            res.status(500).json({ message: err.message });
+        }
     }
 
-    deleteById(req: Request, res: Response) {
-        res.send("delete student by id: " + req.params.id);
+    async deleteById(req: Request, res: Response) {
+        try {
+            await this.model.findByIdAndDelete(req.params.id);
+            res.status(204).send();
+        } catch (err: any) {
+            res.status(500).json({ message: err.message });
+        }
     }
 }
 
 const createController = <T>(model: Model<T>) => {
     return new BaseController<T>(model);
-}
+};
 
 export default createController;

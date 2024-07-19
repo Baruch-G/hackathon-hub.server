@@ -1,7 +1,6 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-export interface IUser {
-//   _id?: mongoose.Types.ObjectId;
+export interface IUser extends Document {
   firstName: string;
   password: string;
   lastName: string;
@@ -11,9 +10,6 @@ export interface IUser {
 }
 
 const userSchema = new Schema<IUser>({
-//   _id: {
-//     type: mongoose.Types.ObjectId,
-//   },
   password: {
     type: String,
     required: true,
@@ -37,5 +33,13 @@ const userSchema = new Schema<IUser>({
     type: [String]
   },
 });
+
+// Method to remove sensitive information
+userSchema.methods.toJSON = function() {
+  const user = this.toObject();
+  delete user.password;
+  delete user.refreshTokens;
+  return user;
+};
 
 export default mongoose.model<IUser>("User", userSchema);
