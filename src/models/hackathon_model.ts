@@ -7,7 +7,7 @@ interface Location {
 }
 
 interface Comment {
-  user: mongoose.Schema.Types.ObjectId | IUser;
+  user: string;
   text: string;
   date: Date;
 }
@@ -20,18 +20,14 @@ export interface IHackathon extends Document {
   description: string;
   comments: Comment[];
   imgs: string[];
-  likes: string[];
+  likes: mongoose.Schema.Types.ObjectId[]; // Store user IDs
   dateCreated: Date;
 }
 
 const commentSchema = new Schema<Comment>({
-  user: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "User", 
-    required: true 
-  },
-  text: { type: String, required: true },
-  date: { type: Date, default: Date.now }
+    user: { type: String, ref: 'User', required: true },
+    text: { type: String, required: true },
+    date: { type: Date, default: Date.now }
 });
 
 const locationSchema = new Schema<Location>({
@@ -44,7 +40,7 @@ const hackathonSchema = new Schema<IHackathon>({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
-    select: "firstName lastName email imgUrl" // Exclude password and refreshTokens
+    select: "firstName lastName email imgUrl"
   },
   location: {
     type: locationSchema,
@@ -67,7 +63,8 @@ const hackathonSchema = new Schema<IHackathon>({
     default: []
   },
   likes: {
-    type: [String],
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: "User",
     default: []
   },
   dateCreated: {

@@ -13,7 +13,10 @@ export class BaseController<T> {
             const query = req.query.name ? { name: req.query.name } : {};
             const documents = await this.model.find(query)
                 .populate('creator', 'firstName lastName email imgUrl')
-                .populate('comments.user', 'firstName lastName email imgUrl');
+                .populate({
+                    path: 'comments.user',
+                    select: 'firstName lastName email imgUrl'
+                });
             res.send(documents);
         } catch (err: any) {
             res.status(500).json({ message: err.message });
@@ -24,7 +27,10 @@ export class BaseController<T> {
         try {
             const document = await this.model.findById(req.params.id)
                 .populate('creator', 'firstName lastName email imgUrl')
-                .populate('comments.user', 'firstName lastName email imgUrl');
+                .populate({
+                    path: 'comments.user',
+                    select: 'firstName lastName email imgUrl'
+                });
             res.send(document);
         } catch (err: any) {
             res.status(500).json({ message: err.message });
@@ -45,7 +51,10 @@ export class BaseController<T> {
         try {
             const updatedDocument = await this.model.findByIdAndUpdate(req.params.id, req.body, { new: true })
                 .populate('creator', 'firstName lastName email imgUrl')
-                .populate('comments.user', 'firstName lastName email imgUrl');
+                .populate({
+                    path: 'comments.user',
+                    select: 'firstName lastName email imgUrl'
+                });
             res.send(updatedDocument);
         } catch (err: any) {
             res.status(500).json({ message: err.message });
