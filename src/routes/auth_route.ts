@@ -17,5 +17,7 @@ router.get("/refresh", authController.refresh);
 
 router.get("/users", authController.getAllUsers);
 
+router.put("/users/:id", authController.updateUser);
+
 
 export default router;

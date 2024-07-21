@@ -8,13 +8,16 @@ import Joi from "joi";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-const validateUser = (data: any) => {
+const validateUser = (data: any, update?: boolean) => {
   const schema = Joi.object({
     firstName: Joi.string().required(),
     lastName: Joi.string().required(),
     email: Joi.string().email().required(),
-    password: Joi.string().required(),
-    imgUrl: Joi.string().uri().optional()
+    password: update
+      ? Joi.string().allow("").optional()
+      : Joi.string().required(),
+    imgUrl: Joi.string().uri().optional(),
+    phoneNumber: Joi.string().optional(),
   });
   return schema.validate(data);
 };
@@ -57,7 +60,9 @@ const googleSignin = async (req: Request, res: Response) => {
 const register = async (req: Request, res: Response) => {
   const { error } = validateUser(req.body);
   if (error) {
-    return res.status(400).json({ message: "Validation error", errors: error.details });
+    return res
+      .status(400)
+      .json({ message: "Validation error", errors: error.details });
   }
 
   const { email, password, firstName, lastName, imgUrl } = req.body;
@@ -100,7 +105,9 @@ const generateTokens = async (user: Document & IUser) => {
     { _id: user._id },
     process.env.JWT_REFRESH_SECRET!
   );
-  user.refreshTokens = user.refreshTokens ? [...user.refreshTokens, refreshToken] : [refreshToken];
+  user.refreshTokens = user.refreshTokens
+    ? [...user.refreshTokens, refreshToken]
+    : [refreshToken];
   await user.save();
   return {
     accessToken,
@@ -143,10 +150,15 @@ const logout = async (req: Request, res: Response) => {
   if (!refreshToken) return res.sendStatus(401);
 
   try {
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as jwt.JwtPayload;
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET!
+    ) as jwt.JwtPayload;
     const userDb = await User.findById(decoded._id);
     if (userDb && userDb.refreshTokens?.includes(refreshToken)) {
-      userDb.refreshTokens = userDb.refreshTokens.filter(t => t !== refreshToken);
+      userDb.refreshTokens = userDb.refreshTokens.filter(
+        (t) => t !== refreshToken
+      );
       await userDb.save();
       res.sendStatus(200);
     } else {
@@ -174,14 +186,26 @@ const refresh = async (req: Request, res: Response) => {
   if (!refreshToken) return res.sendStatus(401);
 
   try {
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as jwt.JwtPayload;
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET!
+    ) as jwt.JwtPayload;
     const userDb = await User.findById(decoded._id);
     if (!userDb || !userDb.refreshTokens?.includes(refreshToken)) {
       res.sendStatus(401);
     } else {
-      const newAccessToken = jwt.sign({ _id: decoded._id }, process.env.JWT_SECRET!, { expiresIn: process.env.JWT_EXPIRATION });
-      const newRefreshToken = jwt.sign({ _id: decoded._id }, process.env.JWT_REFRESH_SECRET!);
-      userDb.refreshTokens = userDb.refreshTokens.filter(t => t !== refreshToken).concat(newRefreshToken);
+      const newAccessToken = jwt.sign(
+        { _id: decoded._id },
+        process.env.JWT_SECRET!,
+        { expiresIn: process.env.JWT_EXPIRATION }
+      );
+      const newRefreshToken = jwt.sign(
+        { _id: decoded._id },
+        process.env.JWT_REFRESH_SECRET!
+      );
+      userDb.refreshTokens = userDb.refreshTokens
+        .filter((t) => t !== refreshToken)
+        .concat(newRefreshToken);
       await userDb.save();
       res.status(200).send({
         accessToken: newAccessToken,
@@ -194,11 +218,54 @@ const refresh = async (req: Request, res: Response) => {
   }
 };
 
+const updateUser = async (req: Request, res: Response) => {
+  const { error } = validateUser(req.body, true);
+  if (error) {
+    return res
+      .status(400)
+      .json({ message: "Validation error", errors: error.details });
+  }
+
+  const { email, firstName, lastName, imgUrl, phoneNumber } = req.body;
+  const userId = req.params.id;
+
+  try {
+    // Find user by ID and update
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        firstName,
+        lastName,
+        email,
+        imgUrl,
+        phoneNumber,
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).send("User not found");
+    }
+
+    res.status(200).send({
+      email: updatedUser.email,
+      _id: updatedUser._id,
+      imgUrl: updatedUser.imgUrl,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+    });
+  } catch (err: any) {
+    console.error(err.message);
+    res.status(400).send("Error during update.");
+  }
+};
+
 export default {
   googleSignin,
   register,
   login,
   logout,
   refresh,
-  getAllUsers
+  getAllUsers,
+  updateUser,
 };

@@ -1,10 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 import { IUser } from "./user_model";
 
-interface Location {
-  lon: number;
-  lat: number;
-}
 
 interface Comment {
   user: string;
@@ -14,7 +10,7 @@ interface Comment {
 
 export interface IHackathon extends Document {
   creator: mongoose.Schema.Types.ObjectId | IUser;
-  location: Location;
+  location: string;
   startDate: Date;
   endDate: Date;
   description: string;
@@ -30,11 +26,6 @@ const commentSchema = new Schema<Comment>({
     date: { type: Date, default: Date.now }
 });
 
-const locationSchema = new Schema<Location>({
-  lon: { type: Number, required: true },
-  lat: { type: Number, required: true }
-});
-
 const hackathonSchema = new Schema<IHackathon>({
   creator: {
     type: mongoose.Schema.Types.ObjectId,
@@ -43,7 +34,7 @@ const hackathonSchema = new Schema<IHackathon>({
     select: "firstName lastName email imgUrl"
   },
   location: {
-    type: locationSchema,
+    type: String,
     required: true
   },
   startDate: {

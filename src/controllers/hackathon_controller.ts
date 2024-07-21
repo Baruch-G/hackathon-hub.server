@@ -67,9 +67,9 @@ export const addComment = async (req: Request, res: Response) => {
     await hackathon.save();
 
     // Populate the user field in the comments
-    const updatedHackathon = await Hackathon.findById(hackathonId).populate('creator', 'firstName lastName email imgUrl')
-    .populate('comments.user', 'firstName lastName email imgUrl');
-
+    const updatedHackathon = await Hackathon.findById(hackathonId)
+      .populate("creator", "firstName lastName email imgUrl")
+      .populate("comments.user", "firstName lastName email imgUrl");
 
     res.status(201).send(updatedHackathon);
   } catch (err: any) {
