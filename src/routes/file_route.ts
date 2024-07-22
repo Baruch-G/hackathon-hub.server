@@ -2,7 +2,7 @@ import express from "express";
 const router = express.Router();
 import multer from "multer";
 
-const base = "http://localhost:6969/";
+const base = "https://hackathon-hub-server.onrender.com/";
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
