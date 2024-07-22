@@ -44,22 +44,6 @@ const app = (): Promise<Express> => {
         app.use("/file", fileRoute);
         app.use("/media",express.static('public'));
 
-        //         const swaggerOptions = {
-        //   definition: {
-        //     openapi: "3.0.0",
-        //     info: {
-        //       title: "Web Advanced Application Development 2023 REST API",
-        //       version: "1.0.1",
-        //       description: "REST server including authentication using JWT and refresh token",
-        //     },
-        //     servers: [{ url: "http://localhost:6969" }],
-        //   },
-        //   apis: ["./routes/*.ts"],
-        // };
-
-        // const swaggerSpecs = swaggerJsDoc(swaggerOptions);
-        // app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerSpecs));
-
         resolve(app);
       })
       .catch((error) => reject(error));
